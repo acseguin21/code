@@ -4,6 +4,7 @@ services:
   web_camera_stream:
     build: .
     container_name: web_camera_stream
+    network_mode: "host"
     ports:
       - "5000:5000"
     volumes:

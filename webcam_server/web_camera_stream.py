@@ -1,6 +1,11 @@
 import cv2
 import yaml
 from flask import Flask, render_template, Response
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -12,42 +17,53 @@ class CameraStream:
     def get_video_stream(self):
         """Generator function to yield video frames"""
         stream_url = self.camera_settings['url']
-        print(f"\nAttempting to connect to: {stream_url}")
+        logger.info(f"Attempting to connect to: {stream_url}")
 
-        # Create capture object with FFMPEG backend
-        self.cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
+        try:
+            # Create capture object with FFMPEG backend
+            self.cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
 
-        if not self.cap.isOpened():
-            print(f"Error: Could not open camera stream for {self.camera_settings['name']}.")
-            return
+            if not self.cap.isOpened():
+                logger.error(f"Could not open camera stream for {self.camera_settings['name']}.")
+                return
 
-        print(f"\nStreaming started for camera: {self.camera_settings['name']}")
+            logger.info(f"Successfully connected to camera: {self.camera_settings['name']}")
 
-        while True:
-            ret, frame = self.cap.read()
-            if not ret:
-                print(f"Error: Can't receive frame from {self.camera_settings['name']} (stream ended?)")
-                break
+            while True:
+                ret, frame = self.cap.read()
+                if not ret:
+                    logger.error(f"Can't receive frame from {self.camera_settings['name']} (stream ended?)")
+                    break
 
-            # Encode the frame in JPEG format
-            ret, buffer = cv2.imencode('.jpg', frame)
-            if not ret:
-                print(f"Error: Failed to encode frame from {self.camera_settings['name']}.")
-                continue
+                # Encode the frame in JPEG format
+                ret, buffer = cv2.imencode('.jpg', frame)
+                if not ret:
+                    logger.error(f"Failed to encode frame from {self.camera_settings['name']}.")
+                    continue
 
-            frame = buffer.tobytes()
+                frame = buffer.tobytes()
 
-            # Yield the frame in byte format
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                # Yield the frame in byte format
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-        # Cleanup
-        self.cap.release()
-        print(f"Streaming stopped for camera: {self.camera_settings['name']}")
+        except Exception as e:
+            logger.error(f"Error in camera stream {self.camera_settings['name']}: {str(e)}")
+            raise
+
+        finally:
+            # Cleanup
+            if self.cap is not None:
+                self.cap.release()
+                logger.info(f"Stream closed for camera: {self.camera_settings['name']}")
 
 def load_camera_settings():
-    with open('camera_config.yml', 'r') as f:
-        return yaml.safe_load(f)
+    try:
+        with open('camera_config.yml', 'r') as f:
+            return yaml.safe_load(f)
+    except Exception as e:
+        logger.error(f"Error loading camera config: {str(e)}")
+        return []
 
 @app.route('/')
 def index():
@@ -60,9 +76,13 @@ def video_feed(camera_id):
     """Video streaming route. Put this in the src attribute of an img tag."""
     camera_settings = load_camera_settings()
     if camera_id < len(camera_settings):
-        camera_stream = CameraStream(camera_settings[camera_id])
-        return Response(camera_stream.get_video_stream(),
-                        mimetype='multipart/x-mixed-replace; boundary=frame')
+        try:
+            camera_stream = CameraStream(camera_settings[camera_id])
+            return Response(camera_stream.get_video_stream(),
+                          mimetype='multipart/x-mixed-replace; boundary=frame')
+        except Exception as e:
+            logger.error(f"Error in video feed for camera {camera_id}: {str(e)}")
+            return f"Error: {str(e)}", 500
     else:
         return "Camera not found", 404
 
