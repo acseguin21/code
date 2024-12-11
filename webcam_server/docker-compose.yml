@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web_camera_stream:
+    build: .
+    container_name: web_camera_stream
+    ports:
+      - "5000:5000"  # Assuming your application runs on port 5000
+    volumes:
+      - ./static:/app/static
+    environment:
+      - ENV_VAR=your_value  # Add any environment variables your app needs
+    depends_on:
+      - redis  # Example of a dependent service
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    ports:
+      - "6379:6379" 
