@@ -5,16 +5,17 @@ services:
     build: .
     container_name: web_camera_stream
     ports:
-      - "5000:5000"  # Assuming your application runs on port 5000
+      - "5000:5000"
     volumes:
       - ./static:/app/static
+      - ./camera_config.yml:/app/camera_config.yml
     environment:
-      - ENV_VAR=your_value  # Add any environment variables your app needs
+      FLASK_ENV: development
     depends_on:
-      - redis  # Example of a dependent service
+      - redis
 
   redis:
     image: "redis:alpine"
     container_name: redis
     ports:
-      - "6379:6379" 
+      - "6379:6379"
