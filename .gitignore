@@ -1,2 +1,69 @@
-camera_config.yml
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
 venv/
+ENV/
+.env
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Docker
+.docker/
+
+# Kubernetes
+k8s/*-secrets.yaml
+k8s/secrets/
+*kubeconfig*
+
+# Logs
+*.log
+logs/
+
+# Local development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.priv
+
+# Other
+*.bak
+*.tmp
+*.temp
+
+# Other
+archive/
+core/
+camera_config.yml

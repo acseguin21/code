@@ -1,4 +1,7 @@
-     Flask
-     Flask-SocketIO
-     opencv-python-headless
-     pyyaml
+Flask
+Flask-SocketIO
+opencv-python-headless
+pyyaml
+requests
+python-dotenv
+requests-oauthlib

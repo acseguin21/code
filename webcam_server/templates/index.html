@@ -53,10 +53,26 @@
             cursor: pointer;
             z-index: 1001;
         }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #007BFF;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <h1>Live Camera Streams</h1>
+    <nav>
+        <a href="/">Cameras</a> | <a href="/sensors">Sensors</a>
+        {% if session.get('oauth_token') %}
+            | <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            | <a href="{{ url_for('login') }}">Login</a>
+        {% endif %}
+    </nav>
     <div class="grid-container">
         {% for camera in cameras %}
         <div class="grid-item" onclick="openFullscreen('{{ url_for('video_feed', camera_id=loop.index0) }}')">

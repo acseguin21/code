@@ -4,9 +4,9 @@
      # Set the working directory in the container
      WORKDIR /app
 
-     # Install ffmpeg and other necessary packages
+     # Install ffmpeg and ping
      RUN apt-get update && \
-         apt-get install -y ffmpeg && \
+         apt-get install -y ffmpeg iputils-ping && \
          apt-get clean && \
          rm -rf /var/lib/apt/lists/*
 

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-deployment
+  namespace: personal-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storage
+  template:
+    metadata:
+      labels:
+        app: storage
+    spec:
+      containers:
+        - name: storage
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: storage-volume
+              mountPath: /usr/share/nginx/html/images
+      volumes:
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: storage-pvc 
