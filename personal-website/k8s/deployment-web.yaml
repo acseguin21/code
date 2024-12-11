@@ -1,54 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-deployment
-  namespace: personal-website
+  name: camera-server
+  labels:
+    app: camera-server
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: web
+      app: camera-server
   template:
     metadata:
       labels:
-        app: web
+        app: camera-server
     spec:
       containers:
-        - name: web
-          image: personal-website-web:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8080
-          env:
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_PASSWORD
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-secret
-                  key: POSTGRES_DB
-            - name: MINIO_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: minio-secret
-                  key: MINIO_ACCESS_KEY
-            - name: MINIO_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: minio-secret
-                  key: MINIO_SECRET_KEY
-          volumeMounts:
-            - name: web-storage
-              mountPath: /app/static/images
-      volumes:
-        - name: web-storage
-          persistentVolumeClaim:
-            claimName: minio-pvc 
+      - name: camera-server
+        image: your-registry/camera-server:latest
+        ports:
+        - containerPort: 5000
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m" 

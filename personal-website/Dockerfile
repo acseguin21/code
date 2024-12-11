@@ -1,22 +1,26 @@
 # Use the official Python image.
 FROM python:3.9-slim
 
-# Set environment variables using key=value format
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
 # Set work directory
 WORKDIR /app
+
+# Install system dependencies for OpenCV
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project
-COPY src/ .
+COPY . .
 
 # Expose port
-EXPOSE 8080
+EXPOSE 5000
 
 # Run the application
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

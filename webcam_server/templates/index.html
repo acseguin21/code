@@ -2,103 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Camera Streams</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surveillance System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 10px;
-            padding: 10px;
-        }
-        .grid-item {
-            position: relative;
-            border: 2px solid #333;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        .fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-        .fullscreen img {
-            width: auto;
-            height: 100%;
-        }
-        .back-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(255, 255, 255, 0.7);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 1001;
-        }
-        nav a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #007BFF;
-        }
-        nav a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Live Camera Streams</h1>
-    <nav>
-        <a href="/">Cameras</a> | <a href="/sensors">Sensors</a>
-        {% if session.get('oauth_token') %}
-            | <a href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-            | <a href="{{ url_for('login') }}">Login</a>
-        {% endif %}
-    </nav>
-    <div class="grid-container">
-        {% for camera in cameras %}
-        <div class="grid-item" onclick="openFullscreen('{{ url_for('video_feed', camera_id=loop.index0) }}')">
-            <h2>{{ camera.name }}</h2>
-            <img src="{{ url_for('video_feed', camera_id=loop.index0) }}" alt="Camera Stream">
-        </div>
-        {% endfor %}
+    <div class="container">
+        <header>
+            <h1>SURVEILLANCE SYSTEM</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-label">STATUS</span>
+                    <span class="status-value active">ACTIVE</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">FEEDS</span>
+                    <span class="status-value">{{ cameras|length }}</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            {% for camera in cameras %}
+            <div class="camera-container">
+                <div class="camera-frame">
+                    <img src="{{ url_for('video_feed', camera_id=loop.index0) }}" alt="Video Feed">
+                    <div class="overlay">
+                        <div class="camera-info">
+                            <span class="timestamp">LIVE</span>
+                            <span class="camera-id">{{ camera.name }}</span>
+                        </div>
+                        <div class="crosshair"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </main>
+
+        <footer>
+            <div class="system-info">
+                <span>SYSTEM OPERATIONAL</span>
+                <span class="pulse"></span>
+            </div>
+        </footer>
     </div>
-
-    <div class="fullscreen" id="fullscreen">
-        <div class="back-button" onclick="closeFullscreen()">Back</div>
-        <img id="fullscreen-img" src="" alt="Full Screen Camera Stream">
-    </div>
-
-    <script>
-        function openFullscreen(src) {
-            const fullscreen = document.getElementById('fullscreen');
-            const fullscreenImg = document.getElementById('fullscreen-img');
-            fullscreenImg.src = src;
-            fullscreen.style.display = 'flex';
-        }
-
-        function closeFullscreen() {
-            const fullscreen = document.getElementById('fullscreen');
-            fullscreen.style.display = 'none';
-        }
-    </script>
 </body>
 </html>

@@ -1,7 +1,10 @@
-Flask
-Flask-SocketIO
-opencv-python-headless
-pyyaml
-requests
-python-dotenv
-requests-oauthlib
+Flask==2.0.1
+Flask-SocketIO==5.1.1
+opencv-python-headless==4.5.3.56
+pyyaml==5.4.1
+requests==2.25.1
+python-dotenv==0.15.0
+requests-oauthlib==1.3.0
+gunicorn==20.1.0
+numpy<2
+werkzeug==2.0.3
