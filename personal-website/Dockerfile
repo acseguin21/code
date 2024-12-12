@@ -1,5 +1,13 @@
-# Use a simple web server image
-FROM nginx:alpine
+FROM node:16
 
-# Copy the website files to the nginx html directory
-COPY . /usr/share/nginx/html 
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["node", "src/server.js"] 
