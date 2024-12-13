@@ -25,6 +25,7 @@
                 </div>
             </div>
             <button class="settings-button" onclick="toggleSettingsMenu()">Settings</button>
+            <button class="recordings-button" onclick="toggleRecordingsMenu()">Recordings</button>
         </header>
 
         <main>
@@ -39,27 +40,6 @@
                                 <span class="camera-id">{{ camera.name }}</span>
                             </div>
                             <div class="crosshair"></div>
-                            <!-- PTZ Controls in Minimized View -->
-                            <div class="ptz-controls minimized" id="ptzControls-{{ loop.index0 }}">
-                                <button class="ptz-up" onclick="sendPTZCommand({{ loop.index0 }}, 0, 1, 0)">
-                                    <i class="fas fa-arrow-up"></i>
-                                </button>
-                                <button class="ptz-down" onclick="sendPTZCommand({{ loop.index0 }}, 0, -1, 0)">
-                                    <i class="fas fa-arrow-down"></i>
-                                </button>
-                                <button class="ptz-left" onclick="sendPTZCommand({{ loop.index0 }}, -1, 0, 0)">
-                                    <i class="fas fa-arrow-left"></i>
-                                </button>
-                                <button class="ptz-right" onclick="sendPTZCommand({{ loop.index0 }}, 1, 0, 0)">
-                                    <i class="fas fa-arrow-right"></i>
-                                </button>
-                                <button class="zoom-in" onclick="sendPTZCommand({{ loop.index0 }}, 0, 0, 1)">
-                                    <i class="fas fa-search-plus"></i>
-                                </button>
-                                <button class="zoom-out" onclick="sendPTZCommand({{ loop.index0 }}, 0, 0, -1)">
-                                    <i class="fas fa-search-minus"></i>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -73,6 +53,34 @@
                 <span class="pulse"></span>
             </div>
         </footer>
+
+        <!-- Stoplight-style Ribbon -->
+        <div class="status-ribbon">
+            <div class="status-item">
+                <span class="status-label">Container Status:</span>
+                <span class="status-indicator" id="containerStatus">🍏</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Camera Connections:</span>
+                <span class="status-indicator" id="cameraStatus">🍏</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Threat Level:</span>
+                <span class="status-indicator" id="threatLevel">🍏</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Frame Rate:</span>
+                <span class="status-indicator" id="frameRate">📊</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Stream Rate:</span>
+                <span class="status-indicator" id="streamRate">📈</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Signal Strength:</span>
+                <span class="status-indicator" id="signalStrength">📶</span>
+            </div>
+        </div>
     </div>
 
     <div class="full-screen" id="fullScreenContainer">
@@ -102,6 +110,13 @@
         <label for="fileSize">Max File Size (MB):</label>
         <input type="number" id="fileSize" min="10" max="1000" value="100">
         <button onclick="applySettings()">Apply</button>
+    </div>
+
+    <!-- Recordings Menu -->
+    <div class="recordings-menu" id="recordingsMenu" style="display: none;">
+        <h2>Recorded Videos</h2>
+        <ul id="recordingsList"></ul>
+        <button onclick="toggleRecordingsMenu()">Close</button>
     </div>
 
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>

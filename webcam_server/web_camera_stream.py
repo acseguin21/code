@@ -3,6 +3,7 @@ import yaml
 from flask import Flask, render_template, Response, jsonify, request
 import logging
 from ptz_controller import PTZController
+import os
 
 app = Flask(__name__)
 
@@ -168,6 +169,16 @@ def update_settings(camera_id):
     # Update the recording settings for the camera
     # Implement logic to adjust recording length, file size, and loop
     return jsonify({'status': 'success'})
+
+@app.route('/recordings', methods=['GET'])
+def list_recordings():
+    """Endpoint to list recorded videos."""
+    try:
+        recordings = os.listdir(RECORDINGS_DIR)
+        recordings = [rec for rec in recordings if rec.endswith('.mp4')]  # Filter for mp4 files
+        return jsonify({'recordings': recordings}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, threaded=True)

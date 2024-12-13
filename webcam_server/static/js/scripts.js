@@ -105,4 +105,73 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Function to update status ribbon indicators
+    function updateStatusRibbon() {
+        // ... existing fetch requests ...
+    
+        // Fetch and update Frame Rate
+        fetch('/status/frame_rate')
+            .then(response => response.json())
+            .then(data => {
+                const frameRate = document.getElementById('frameRate');
+                frameRate.textContent = data.rate + 'fps'; // Example format
+            })
+            .catch(error => console.error('Error fetching frame rate:', error));
+    
+        // Fetch and update Stream Rate
+        fetch('/status/stream_rate')
+            .then(response => response.json())
+            .then(data => {
+                const streamRate = document.getElementById('streamRate');
+                streamRate.textContent = data.rate + 'Mbps'; // Example format
+            })
+            .catch(error => console.error('Error fetching stream rate:', error));
+    
+        // Fetch and update Signal Strength
+        fetch('/status/signal_strength')
+            .then(response => response.json())
+            .then(data => {
+                const signalStrength = document.getElementById('signalStrength');
+                signalStrength.textContent = data.strength; // Example format
+                // Optionally, change color based on strength
+                if (data.strength === 'Weak') {
+                    signalStrength.className = 'status-indicator red';
+                } else if (data.strength === 'Moderate') {
+                    signalStrength.className = 'status-indicator yellow';
+                } else {
+                    signalStrength.className = 'status-indicator green';
+                }
+            })
+            .catch(error => console.error('Error fetching signal strength:', error));
+    }
+    
+    // Initial status update
+    updateStatusRibbon();
+    
+    // Update status every 30 seconds
+    setInterval(updateStatusRibbon, 30000);
+
+    async function toggleRecordingsMenu() {
+        const recordingsMenu = document.getElementById('recordingsMenu');
+        if (recordingsMenu.style.display === 'none') {
+            // Fetch recordings from the server
+            const response = await fetch('/recordings');
+            if (response.ok) {
+                const data = await response.json();
+                const recordingsList = document.getElementById('recordingsList');
+                recordingsList.innerHTML = ''; // Clear previous entries
+                data.recordings.forEach(recording => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<a href="/recordings/${recording}" target="_blank">${recording}</a>`;
+                    recordingsList.appendChild(li);
+                });
+            } else {
+                console.error('Failed to fetch recordings');
+            }
+            recordingsMenu.style.display = 'block';
+        } else {
+            recordingsMenu.style.display = 'none';
+        }
+    }
 }); 
