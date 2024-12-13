@@ -8,127 +8,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0a0a0a;
-            color: #00ff00;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        header, footer {
-            flex: 0 0 auto;
-            padding: 10px;
-            background-color: #111;
-            color: #00ff00;
-            text-align: center;
-            border-bottom: 2px solid #00ff00;
-            border-top: 2px solid #00ff00;
-            box-shadow: 0 0 10px #00ff00;
-        }
-        main {
-            flex: 1 1 auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 10px;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .camera-container {
-            position: relative;
-            cursor: pointer;
-            border: 2px solid #00ff00;
-            box-shadow: 0 0 15px #00ff00;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .camera-container:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 25px #00ff00;
-        }
-        .camera-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: brightness(1.2) contrast(1.2);
-        }
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #00ff00;
-            font-size: 1.2em;
-            text-shadow: 0 0 5px #00ff00;
-        }
-        .full-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .full-screen img {
-            max-width: 100%;
-            max-height: 100%;
-            border: 5px solid #00ff00;
-            box-shadow: 0 0 30px #00ff00;
-        }
-        .back-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: #00ff00;
-            color: #000;
-            padding: 10px 20px;
-            cursor: pointer;
-            border: none;
-            font-size: 18px;
-            box-shadow: 0 0 10px #00ff00;
-            transition: background 0.3s, box-shadow 0.3s;
-        }
-        .back-button:hover {
-            background: #00cc00;
-            box-shadow: 0 0 20px #00ff00;
-        }
-        .pulse {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: #00ff00;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5); }
-            100% { transform: scale(1); }
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pvi/P621/1S1bOvoAyyzO3yOvg/DrBw7LyFVjL0LkTWXkLZU3zhZgrEerEkXyIlUP3pSX3CUDf6tN+DYXgY5qg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>SURVEILLANCE SYSTEM</h1>
+            <h1>Surveillance System</h1>
             <div class="status-bar">
                 <div class="status-item">
                     <span class="status-label">STATUS</span>
@@ -139,23 +24,47 @@
                     <span class="status-value">{{ cameras|length }}</span>
                 </div>
             </div>
+            <button class="settings-button" onclick="toggleSettingsMenu()">Settings</button>
         </header>
 
         <main>
-            {% for camera in cameras %}
-            <div class="camera-container" onclick="openFullScreen('{{ url_for('video_feed', camera_id=loop.index0) }}')">
-                <div class="camera-frame">
-                    <img src="{{ url_for('video_feed', camera_id=loop.index0) }}" alt="Video Feed">
-                    <div class="overlay">
-                        <div class="camera-info">
-                            <span class="timestamp">LIVE</span>
-                            <span class="camera-id">{{ camera.name }}</span>
+            <div class="grid-container">
+                {% for camera in cameras %}
+                <div class="camera-container" onclick='openFullScreen("{{ url_for('video_feed', camera_id=loop.index0) }}", {{ loop.index0 }})'>
+                    <div class="camera-frame">
+                        <img src="{{ url_for('video_feed', camera_id=loop.index0) }}" alt="Video Feed">
+                        <div class="overlay">
+                            <div class="camera-info">
+                                <span class="timestamp">LIVE</span>
+                                <span class="camera-id">{{ camera.name }}</span>
+                            </div>
+                            <div class="crosshair"></div>
+                            <!-- PTZ Controls in Minimized View -->
+                            <div class="ptz-controls minimized" id="ptzControls-{{ loop.index0 }}">
+                                <button class="ptz-up" onclick="sendPTZCommand({{ loop.index0 }}, 0, 1, 0)">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="ptz-down" onclick="sendPTZCommand({{ loop.index0 }}, 0, -1, 0)">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="ptz-left" onclick="sendPTZCommand({{ loop.index0 }}, -1, 0, 0)">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <button class="ptz-right" onclick="sendPTZCommand({{ loop.index0 }}, 1, 0, 0)">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                                <button class="zoom-in" onclick="sendPTZCommand({{ loop.index0 }}, 0, 0, 1)">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button class="zoom-out" onclick="sendPTZCommand({{ loop.index0 }}, 0, 0, -1)">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="crosshair"></div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </main>
 
         <footer>
@@ -169,20 +78,32 @@
     <div class="full-screen" id="fullScreenContainer">
         <button class="back-button" onclick="closeFullScreen()">Back</button>
         <img id="fullScreenImage" src="" alt="Full Screen Video Feed">
+        
+        <!-- PTZ Controls in Full-Screen Mode -->
+        <div class="ptz-controls" id="ptzControls">
+            <div class="ptz-pad">
+                <button class="ptz-up">⬆️</button>
+                <button class="ptz-down">⬇️</button>
+                <button class="ptz-left">⬅️</button>
+                <button class="ptz-right">➡️</button>
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-in">🔍+</button>
+                <button class="zoom-out">🔍-</button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        function openFullScreen(src) {
-            const fullScreenContainer = document.getElementById('fullScreenContainer');
-            const fullScreenImage = document.getElementById('fullScreenImage');
-            fullScreenImage.src = src;
-            fullScreenContainer.style.display = 'flex';
-        }
+    <!-- Settings Menu -->
+    <div class="settings-menu" id="settingsMenu">
+        <h2>Camera Settings</h2>
+        <label for="recordLength">Record Length (minutes):</label>
+        <input type="number" id="recordLength" min="1" max="60" value="10">
+        <label for="fileSize">Max File Size (MB):</label>
+        <input type="number" id="fileSize" min="10" max="1000" value="100">
+        <button onclick="applySettings()">Apply</button>
+    </div>
 
-        function closeFullScreen() {
-            const fullScreenContainer = document.getElementById('fullScreenContainer');
-            fullScreenContainer.style.display = 'none';
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>

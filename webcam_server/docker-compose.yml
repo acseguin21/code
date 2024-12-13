@@ -3,8 +3,8 @@ version: '3.8'
 services:
   web_camera_stream:
     build: .
+    platform: linux/arm64
     container_name: web_camera_stream
-    network_mode: "host"
     ports:
       - "5000:5000"
     volumes:
@@ -12,11 +12,44 @@ services:
       - ./camera_config.yml:/app/camera_config.yml
     environment:
       FLASK_ENV: development
+      LOG_LEVEL: WARNING
+      CAMERA_USERNAME: ${CAMERA_USERNAME}
+      CAMERA_PASSWORD: ${CAMERA_PASSWORD}
     depends_on:
       - redis
+      - video_storage
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   redis:
     image: "redis:alpine"
+    platform: linux/arm64
     container_name: redis
     ports:
       - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  video_storage:
+    build: ./storage
+    platform: linux/arm64
+    container_name: video_storage
+    volumes:
+      - ~/host_videos:/videos
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 1G
