@@ -1,16 +1,29 @@
 import cv2
 import yaml
-from flask import Flask, render_template, Response, jsonify, request
+from flask import Flask, render_template, Response, jsonify, request, url_for, send_from_directory
 import logging
 from ptz_controller import PTZController
 import os
+from datetime import datetime
+from werkzeug.utils import secure_filename
+from threading import Thread
+import time
+import sys
 
 app = Flask(__name__)
 
 # Set logging level based on environment variable
-log_level = app.config.get('LOG_LEVEL', 'WARNING').upper()
-logging.basicConfig(level=getattr(logging, log_level))
+log_level = os.environ.get('LOG_LEVEL', 'DEBUG').upper()
+logging.basicConfig(
+    level=getattr(logging, log_level),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
 logger = logging.getLogger(__name__)
+
+RECORDINGS_DIR = os.path.join(os.path.dirname(__file__), 'static', 'recordings')
+if not os.path.exists(RECORDINGS_DIR):
+    os.makedirs(RECORDINGS_DIR)
 
 class CameraStream:
     def __init__(self, camera_settings):
@@ -161,24 +174,168 @@ def ptz_status(camera_id):
         logger.error(f"PTZ status error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/settings/<int:camera_id>', methods=['POST'])
-def update_settings(camera_id):
-    data = request.get_json()
-    record_length = data.get('recordLength', 10)
-    file_size = data.get('fileSize', 100)
-    # Update the recording settings for the camera
-    # Implement logic to adjust recording length, file size, and loop
-    return jsonify({'status': 'success'})
+@app.route('/settings/current', methods=['GET'])
+def get_current_settings():
+    try:
+        # Get settings from your storage (database/file/etc)
+        settings = {
+            'recordLength': 10,  # default values
+            'fileSize': 100,
+            'autoRecord': False,
+            'quality': 'high',
+            'fps': 30
+        }
+        return jsonify(settings)
+    except Exception as e:
+        logger.error(f"Error getting settings: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/recordings', methods=['GET'])
+@app.route('/settings/update', methods=['POST'])
+def update_settings():
+    try:
+        settings = request.get_json()
+        # Validate settings
+        if not all(key in settings for key in ['recordLength', 'fileSize', 'autoRecord', 'quality', 'fps']):
+            return jsonify({'error': 'Missing required settings'}), 400
+            
+        # Save settings to your storage (database/file/etc)
+        # For now, just log them
+        logger.info(f"Updated settings: {settings}")
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        logger.error(f"Error updating settings: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/recordings')
 def list_recordings():
     """Endpoint to list recorded videos."""
     try:
-        recordings = os.listdir(RECORDINGS_DIR)
-        recordings = [rec for rec in recordings if rec.endswith('.mp4')]  # Filter for mp4 files
+        recordings = []
+        for filename in os.listdir(RECORDINGS_DIR):
+            if filename.endswith('.mp4'):
+                file_path = os.path.join(RECORDINGS_DIR, filename)
+                file_stats = os.stat(file_path)
+                recordings.append({
+                    'name': filename,
+                    'size': file_stats.st_size,
+                    'date': datetime.fromtimestamp(file_stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                    'url': url_for('static', filename=f'recordings/{filename}')
+                })
         return jsonify({'recordings': recordings}), 200
     except Exception as e:
+        logger.error(f"Error listing recordings: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/recordings/<path:filename>')
+def serve_recording(filename):
+    """Serve a recorded video file."""
+    try:
+        return send_from_directory(RECORDINGS_DIR, filename)
+    except Exception as e:
+        logger.error(f"Error serving recording {filename}: {str(e)}")
+        return jsonify({'error': str(e)}), 404
+
+class CameraRecorder:
+    def __init__(self, camera_id, settings):
+        self.camera_id = camera_id
+        self.settings = settings
+        self.is_recording = False
+        self.current_recording = None
+        self.recording_thread = None
+
+    def start_recording(self):
+        if not self.is_recording:
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            filename = f"camera_{self.camera_id}_{timestamp}.mp4"
+            filepath = os.path.join(RECORDINGS_DIR, filename)
+            self.current_recording = filename
+            self.is_recording = True
+            self.recording_thread = Thread(target=self._record_video, args=(filepath,))
+            self.recording_thread.start()
+            return {'status': 'started', 'filename': filename}
+        return {'status': 'already_recording', 'filename': self.current_recording}
+
+    def stop_recording(self):
+        if self.is_recording:
+            self.is_recording = False
+            if self.recording_thread:
+                self.recording_thread.join()
+            return {'status': 'stopped', 'filename': self.current_recording}
+        return {'status': 'not_recording'}
+
+    def _record_video(self, filepath):
+        try:
+            cap = cv2.VideoCapture(self.settings['url'])
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = None
+            
+            while self.is_recording:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                    
+                if out is None:
+                    height, width = frame.shape[:2]
+                    out = cv2.VideoWriter(filepath, fourcc, 20.0, (width, height))
+                    
+                out.write(frame)
+                
+        except Exception as e:
+            logger.error(f"Recording error for camera {self.camera_id}: {str(e)}")
+        finally:
+            if out:
+                out.release()
+            if cap:
+                cap.release()
+
+camera_recorders = {}
+
+@app.route('/camera/<int:camera_id>/record/start', methods=['POST'])
+def start_recording(camera_id):
+    try:
+        camera_settings = load_camera_settings()
+        if camera_id >= len(camera_settings):
+            return jsonify({'error': 'Camera not found'}), 404
+
+        if camera_id not in camera_recorders:
+            camera_recorders[camera_id] = CameraRecorder(camera_id, camera_settings[camera_id])
+
+        result = camera_recorders[camera_id].start_recording()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Failed to start recording: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/camera/<int:camera_id>/record/stop', methods=['POST'])
+def stop_recording(camera_id):
+    try:
+        if camera_id not in camera_recorders:
+            return jsonify({'error': 'Camera not recording'}), 404
+
+        result = camera_recorders[camera_id].stop_recording()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Failed to stop recording: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/camera/<int:camera_id>/record/status', methods=['GET'])
+def recording_status(camera_id):
+    if camera_id in camera_recorders:
+        return jsonify({
+            'is_recording': camera_recorders[camera_id].is_recording,
+            'current_recording': camera_recorders[camera_id].current_recording
+        })
+    return jsonify({'is_recording': False, 'current_recording': None})
+
+@app.errorhandler(Exception)
+def handle_error(error):
+    logger.error(f"Unhandled error: {str(error)}", exc_info=True)
+    return jsonify({'error': str(error)}), 500
+
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, threaded=True)
+    try:
+        logger.info("Starting web camera stream server...")
+        app.run(host='0.0.0.0', port=5000, threaded=True)
+    except Exception as e:
+        logger.error(f"Failed to start server: {str(e)}", exc_info=True)
+        sys.exit(1)

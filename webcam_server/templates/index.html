@@ -31,7 +31,7 @@
         <main>
             <div class="grid-container">
                 {% for camera in cameras %}
-                <div class="camera-container" onclick='openFullScreen("{{ url_for('video_feed', camera_id=loop.index0) }}", {{ loop.index0 }})'>
+                <div class="camera-container" onclick="openFullScreen('{{ url_for('video_feed', camera_id=loop.index0) }}', {{ loop.index0 }})">
                     <div class="camera-frame">
                         <img src="{{ url_for('video_feed', camera_id=loop.index0) }}" alt="Video Feed">
                         <div class="overlay">
@@ -104,12 +104,52 @@
 
     <!-- Settings Menu -->
     <div class="settings-menu" id="settingsMenu">
-        <h2>Camera Settings</h2>
-        <label for="recordLength">Record Length (minutes):</label>
-        <input type="number" id="recordLength" min="1" max="60" value="10">
-        <label for="fileSize">Max File Size (MB):</label>
-        <input type="number" id="fileSize" min="10" max="1000" value="100">
-        <button onclick="applySettings()">Apply</button>
+        <h2>Camera Control Center</h2>
+        <div class="settings-grid">
+            <div class="settings-section">
+                <h3>Recording Settings</h3>
+                <div class="setting-group">
+                    <label for="recordLength">Record Length (minutes)</label>
+                    <input type="range" id="recordLength" min="1" max="60" value="10">
+                    <span class="setting-value" id="recordLengthValue">10</span>
+                </div>
+                <div class="setting-group">
+                    <label for="fileSize">Max File Size (MB)</label>
+                    <input type="range" id="fileSize" min="10" max="1000" value="100">
+                    <span class="setting-value" id="fileSizeValue">100</span>
+                </div>
+                <div class="setting-group">
+                    <label for="autoRecord">Auto Record</label>
+                    <label class="switch">
+                        <input type="checkbox" id="autoRecord">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Video Settings</h3>
+                <div class="setting-group">
+                    <label for="quality">Quality</label>
+                    <select id="quality">
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="fps">Frame Rate</label>
+                    <select id="fps">
+                        <option value="30">30 FPS</option>
+                        <option value="24">24 FPS</option>
+                        <option value="15">15 FPS</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="settings-actions">
+            <button onclick="applySettings()" class="apply-btn">Apply Settings</button>
+            <button onclick="toggleSettingsMenu()" class="cancel-btn">Close</button>
+        </div>
     </div>
 
     <!-- Recordings Menu -->

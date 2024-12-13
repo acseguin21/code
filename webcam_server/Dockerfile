@@ -1,27 +1,42 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.9-slim
-
-# Set the working directory in the container
-WORKDIR /app
+# Use the official Python image from the Docker Hub with platform specification
+FROM --platform=linux/arm64 python:3.9-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    ffmpeg \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libglib2.0-0 \
-    libgl1-mesa-glx \
+    libxrender-dev \
+    ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python packages
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
-# Make port 5000 available to the world outside this container
+# Create recordings directory
+RUN mkdir -p static/recordings && chmod 777 static/recordings
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=web_camera_stream.py
+
+# Expose port
 EXPOSE 5000
 
-# Run the application with Flask's built-in server
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
+
+# Run the application
 CMD ["python", "web_camera_stream.py"]

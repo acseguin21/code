@@ -2,7 +2,11 @@ version: '3.8'
 
 services:
   web_camera_stream:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILDPLATFORM: linux/arm64
     platform: linux/arm64
     container_name: web_camera_stream
     ports:
@@ -10,19 +14,13 @@ services:
     volumes:
       - ./static:/app/static
       - ./camera_config.yml:/app/camera_config.yml
+      - ./static/recordings:/app/static/recordings
     environment:
       FLASK_ENV: development
-      LOG_LEVEL: WARNING
+      LOG_LEVEL: DEBUG
       CAMERA_USERNAME: ${CAMERA_USERNAME}
       CAMERA_PASSWORD: ${CAMERA_PASSWORD}
-    depends_on:
-      - redis
-      - video_storage
-    deploy:
-      resources:
-        limits:
-          cpus: '1.00'
-          memory: 1G
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/"]
       interval: 30s
@@ -30,26 +28,21 @@ services:
       retries: 3
 
   redis:
-    image: "redis:alpine"
+    image: "arm64v8/redis:alpine"
     platform: linux/arm64
     container_name: redis
     ports:
       - "6379:6379"
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
+    restart: unless-stopped
 
   video_storage:
-    build: ./storage
+    build:
+      context: ./storage
+      dockerfile: Dockerfile
+      args:
+        BUILDPLATFORM: linux/arm64
     platform: linux/arm64
     container_name: video_storage
     volumes:
-      - ~/host_videos:/videos
-    restart: always
-    deploy:
-      resources:
-        limits:
-          cpus: '1.00'
-          memory: 1G
+      - ./static/recordings:/videos
+    restart: unless-stopped

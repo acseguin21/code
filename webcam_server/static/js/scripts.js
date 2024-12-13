@@ -154,24 +154,173 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function toggleRecordingsMenu() {
         const recordingsMenu = document.getElementById('recordingsMenu');
+        
         if (recordingsMenu.style.display === 'none') {
-            // Fetch recordings from the server
-            const response = await fetch('/recordings');
-            if (response.ok) {
+            try {
+                const response = await fetch('/recordings');
+                if (!response.ok) throw new Error('Failed to fetch recordings');
+                
                 const data = await response.json();
                 const recordingsList = document.getElementById('recordingsList');
                 recordingsList.innerHTML = ''; // Clear previous entries
+                
                 data.recordings.forEach(recording => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<a href="/recordings/${recording}" target="_blank">${recording}</a>`;
+                    const size = (recording.size / 1024 / 1024).toFixed(2); // Convert to MB
+                    li.innerHTML = `
+                        <a href="${recording.url}" target="_blank">
+                            <span class="recording-name">${recording.name}</span>
+                            <span class="recording-info">
+                                ${recording.date} | ${size} MB
+                            </span>
+                        </a>`;
                     recordingsList.appendChild(li);
                 });
-            } else {
-                console.error('Failed to fetch recordings');
+                
+                recordingsMenu.style.display = 'block';
+            } catch (error) {
+                console.error('Error fetching recordings:', error);
+                alert('Failed to load recordings');
             }
-            recordingsMenu.style.display = 'block';
         } else {
             recordingsMenu.style.display = 'none';
+        }
+    }
+
+    window.toggleRecordingsMenu = toggleRecordingsMenu;
+
+    async function toggleRecording(cameraId) {
+        const recordButton = document.querySelector(`#recordButton_${cameraId}`);
+        const isRecording = recordButton.classList.contains('recording');
+        
+        try {
+            const response = await fetch(`/camera/${cameraId}/record/${isRecording ? 'stop' : 'start'}`, {
+                method: 'POST'
+            });
+            
+            if (!response.ok) throw new Error('Failed to toggle recording');
+            
+            const result = await response.json();
+            
+            if (isRecording) {
+                recordButton.classList.remove('recording');
+                showNotification(`Recording stopped: ${result.filename}`);
+            } else {
+                recordButton.classList.add('recording');
+                showNotification(`Recording started: ${result.filename}`);
+            }
+        } catch (error) {
+            console.error('Recording error:', error);
+            showNotification('Failed to toggle recording', 'error');
+        }
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
+    }
+
+    function updateRecordingStatuses() {
+        document.querySelectorAll('[id^="recordButton_"]').forEach(async button => {
+            const cameraId = button.id.split('_')[1];
+            try {
+                const response = await fetch(`/camera/${cameraId}/record/status`);
+                if (!response.ok) throw new Error('Failed to get recording status');
+                
+                const status = await response.json();
+                if (status.is_recording) {
+                    button.classList.add('recording');
+                } else {
+                    button.classList.remove('recording');
+                }
+            } catch (error) {
+                console.error(`Failed to update recording status for camera ${cameraId}:`, error);
+            }
+        });
+    }
+
+    setInterval(updateRecordingStatuses, 5000);
+
+    function initializeSettings() {
+        // Initialize range input displays
+        document.getElementById('recordLength').addEventListener('input', function() {
+            document.getElementById('recordLengthValue').textContent = this.value;
+        });
+        
+        document.getElementById('fileSize').addEventListener('input', function() {
+            document.getElementById('fileSizeValue').textContent = this.value;
+        });
+    }
+
+    async function applySettings() {
+        const settings = {
+            recordLength: parseInt(document.getElementById('recordLength').value),
+            fileSize: parseInt(document.getElementById('fileSize').value),
+            autoRecord: document.getElementById('autoRecord').checked,
+            quality: document.getElementById('quality').value,
+            fps: parseInt(document.getElementById('fps').value)
+        };
+
+        try {
+            const response = await fetch('/settings/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
+
+            if (!response.ok) throw new Error('Failed to update settings');
+
+            showNotification('Settings updated successfully');
+            toggleSettingsMenu();
+        } catch (error) {
+            console.error('Settings update error:', error);
+            showNotification('Failed to update settings', 'error');
+        }
+    }
+
+    // Add this to your document ready function
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSettings();
+    });
+
+    // Update the existing toggleSettingsMenu function
+    function toggleSettingsMenu() {
+        const settingsMenu = document.getElementById('settingsMenu');
+        if (settingsMenu.style.display === 'none' || !settingsMenu.style.display) {
+            settingsMenu.style.display = 'block';
+            loadCurrentSettings();
+        } else {
+            settingsMenu.style.display = 'none';
+        }
+    }
+
+    async function loadCurrentSettings() {
+        try {
+            const response = await fetch('/settings/current');
+            if (!response.ok) throw new Error('Failed to load settings');
+            
+            const settings = await response.json();
+            
+            document.getElementById('recordLength').value = settings.recordLength;
+            document.getElementById('recordLengthValue').textContent = settings.recordLength;
+            document.getElementById('fileSize').value = settings.fileSize;
+            document.getElementById('fileSizeValue').textContent = settings.fileSize;
+            document.getElementById('autoRecord').checked = settings.autoRecord;
+            document.getElementById('quality').value = settings.quality;
+            document.getElementById('fps').value = settings.fps;
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            showNotification('Failed to load current settings', 'error');
         }
     }
 }); 
