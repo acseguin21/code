@@ -1,8 +1,11 @@
 :root {
-    --neon-blue: #00f3ff;
-    --neon-pink: #ff0099;
-    --dark-bg: #0a0a15;
-    --grid-color: rgba(0, 243, 255, 0.1);
+    --golden: #FFD700;
+    --soviet-red: #CC0000;
+    --terminal-green: #00FF41;
+    --dark-metal: #1a1a1a;
+    --screen-glow: rgba(255, 215, 0, 0.2);
+    --danger-red: #FF0000;
+    --radar-green: #39FF14;
 }
 
 * {
@@ -16,13 +19,13 @@ body, html {
     padding: 0;
     height: 100%;
     overflow: hidden;
-    background-color: #0a0a0a;
-    color: #00ff00;
-    font-family: 'Orbitron', sans-serif;
+    background-color: var(--dark-metal);
+    color: var(--golden);
+    font-family: 'Share Tech Mono', monospace;
     background-image: 
-        linear-gradient(var(--grid-color) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-    background-size: 30px 30px;
+        linear-gradient(var(--screen-glow) 1px, transparent 1px),
+        linear-gradient(90deg, var(--screen-glow) 1px, transparent 1px);
+    background-size: 50px 50px;
 }
 
 .container {
@@ -45,32 +48,42 @@ header, footer {
 
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 10px;
-    padding: 10px;
-    box-sizing: border-box;
-    flex: 1 1 auto;
+    grid-template-columns: repeat(2, 500px);
+    gap: 80px;
+    padding: 60px;
+    margin: 20px;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 0 20px var(--screen-glow);
 }
 
 .camera-container {
     position: relative;
-    cursor: pointer;
-    border: 2px solid #00ff00;
-    box-shadow: 0 0 15px #00ff00;
-    transition: transform 0.3s, box-shadow 0.3s;
+    width: 500px;
+    height: 375px;
+    transform: perspective(1000px) rotateX(3deg);
+    transition: transform 0.3s;
+    border: 3px solid var(--golden);
+    box-shadow: 0 0 15px var(--screen-glow);
+    overflow: hidden;
 }
 
 .camera-container:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 25px #00ff00;
+    transform: perspective(1000px) rotateX(5deg) scale(1.05);
+    box-shadow: 0 0 25px var(--golden);
+}
+
+.camera-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .camera-frame img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: brightness(1.2) contrast(1.2);
 }
 
 .overlay {
@@ -358,56 +371,143 @@ input:checked + .slider:before {
 
 .camera-info {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    display: flex;
-    gap: 20px;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.9rem;
+    top: 10px;
+    left: 10px;
+    color: var(--golden);
+    font-family: 'Share Tech Mono', monospace;
+    text-shadow: 0 0 5px var(--golden);
+    z-index: 2;
 }
 
 .timestamp {
-    color: var(--neon-pink);
-    animation: blink 1s infinite;
+    display: block;
+    font-size: 0.8em;
+    margin-bottom: 5px;
 }
 
 .camera-id {
-    color: var(--neon-blue);
+    display: block;
+    font-size: 1.2em;
+    font-weight: bold;
 }
 
 .crosshair {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 100px;
-    height: 100px;
     transform: translate(-50%, -50%);
-    border: 2px solid var(--neon-blue);
-    border-radius: 50%;
-    opacity: 0.5;
+    width: 200px;
+    height: 200px;
+    pointer-events: none;
+    opacity: 0.3;
 }
 
 .crosshair::before,
 .crosshair::after {
     content: '';
     position: absolute;
-    background-color: var(--neon-blue);
+    background: transparent;
 }
 
 .crosshair::before {
-    top: 50%;
-    left: -10px;
-    right: -10px;
+    width: 150px;
     height: 2px;
+    top: 50%;
+    left: 0;
     transform: translateY(-50%);
+    border-top: 1px solid var(--golden);
+    border-bottom: 1px solid var(--golden);
+    box-shadow: 0 0 5px var(--golden);
 }
 
 .crosshair::after {
-    left: 50%;
-    top: -10px;
-    bottom: -10px;
     width: 2px;
+    height: 150px;
+    left: 50%;
+    top: 0;
     transform: translateX(-50%);
+    border-left: 1px solid var(--golden);
+    border-right: 1px solid var(--golden);
+    box-shadow: 0 0 5px var(--golden);
+}
+
+.crosshair::before {
+    content: '';
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+}
+
+.crosshair .corner {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border: 1px solid var(--golden);
+    box-shadow: 0 0 3px var(--golden);
+    opacity: 0.5;
+}
+
+.crosshair .corner-tl {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.crosshair .corner-tr {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+}
+
+.crosshair .corner-bl {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+}
+
+.crosshair .corner-br {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+}
+
+.crosshair .range-indicator {
+    position: absolute;
+    font-family: 'Share Tech Mono', monospace;
+    color: var(--golden);
+    font-size: 0.7em;
+    text-shadow: 0 0 2px var(--golden);
+    opacity: 0.5;
+}
+
+.crosshair .range-top {
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.crosshair .range-bottom {
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.crosshair .range-left {
+    left: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.crosshair .range-right {
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .system-info {
@@ -712,4 +812,572 @@ input:checked + .slider:before {
 @keyframes slide-out {
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(100%); opacity: 0; }
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--dark-bg);
+}
+
+.login-form {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 2rem;
+    border: 2px solid var(--neon-blue);
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form h2 {
+    color: var(--neon-blue);
+    text-align: center;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    color: var(--neon-blue);
+    margin-bottom: 0.5rem;
+    font-size: 0.9em;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    background: rgba(0, 243, 255, 0.1);
+    border: 1px solid var(--neon-blue);
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.error-message {
+    color: var(--neon-pink);
+    text-align: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border: 1px solid var(--neon-pink);
+    background: rgba(255, 0, 99, 0.1);
+}
+
+.flash-message {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.flash-message.success {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
+
+.flash-message.error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+/* Update the login form button styles */
+.login-form button {
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-top: 1rem;
+}
+
+.login-form button:hover {
+    background: var(--neon-blue);
+    color: var(--dark-bg);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.login-form button:active {
+    transform: translateY(1px);
+}
+
+.login-form button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(0, 243, 255, 0.2),
+        transparent
+    );
+    transition: all 0.5s;
+}
+
+.login-form button:hover::before {
+    left: 100%;
+}
+
+/* Add focus styles for form inputs */
+.form-group input:focus {
+    outline: none;
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 15px rgba(255, 0, 153, 0.3);
+    background: rgba(255, 0, 153, 0.1);
+}
+
+/* Add hover effect for form inputs */
+.form-group input:hover {
+    border-color: var(--neon-pink);
+    box-shadow: 0 0 10px rgba(255, 0, 153, 0.2);
+}
+
+/* Add transition for smooth effects */
+.form-group input {
+    transition: all 0.3s ease;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(to right, rgba(0,0,0,0.9), rgba(204,0,0,0.1));
+    border-bottom: 2px solid var(--golden);
+}
+
+.system-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.classification {
+    color: var(--soviet-red);
+    font-size: 0.8em;
+    margin-top: 5px;
+    animation: pulse 2s infinite;
+}
+
+.control-button {
+    background: transparent;
+    border: 2px solid var(--golden);
+    color: var(--golden);
+    padding: 10px 20px;
+    margin-left: 15px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.control-button:hover {
+    background: var(--golden);
+    color: var(--dark-metal);
+    box-shadow: 0 0 20px var(--screen-glow);
+}
+
+.control-button.logout {
+    border-color: var(--soviet-red);
+    color: var(--soviet-red);
+}
+
+.control-button.logout:hover {
+    background: var(--soviet-red);
+    color: var(--dark-metal);
+    box-shadow: 0 0 20px rgba(204,0,0,0.5);
+}
+
+.settings-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.settings-panel {
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--golden);
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.documentation ol {
+    margin-left: 20px;
+    line-height: 1.6;
+}
+
+.documentation code {
+    background: rgba(255,215,0,0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--terminal-green);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Settings Page Styles */
+.settings-body {
+    background: var(--dark-metal);
+    background-image: 
+        radial-gradient(circle at 50% 50%, var(--screen-glow) 0%, transparent 50%),
+        linear-gradient(var(--screen-glow) 1px, transparent 1px),
+        linear-gradient(90deg, var(--screen-glow) 1px, transparent 1px);
+    background-size: 100% 100%, 50px 50px, 50px 50px;
+}
+
+.settings-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(to right, rgba(0,0,0,0.9), rgba(204,0,0,0.1));
+    border-bottom: 2px solid var(--golden);
+    margin-bottom: 30px;
+}
+
+.nav-button {
+    background: transparent;
+    border: 2px solid var(--golden);
+    color: var(--golden);
+    padding: 10px 20px;
+    text-decoration: none;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-button:hover {
+    background: var(--golden);
+    color: var(--dark-metal);
+    box-shadow: 0 0 20px var(--screen-glow);
+}
+
+.nav-button.danger {
+    border-color: var(--soviet-red);
+    color: var(--soviet-red);
+}
+
+.nav-button.danger:hover {
+    background: var(--soviet-red);
+    color: var(--dark-metal);
+    box-shadow: 0 0 20px rgba(204,0,0,0.5);
+}
+
+.camera-settings-group {
+    background: rgba(0,0,0,0.5);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--golden);
+    border-radius: 5px;
+}
+
+.setting-control {
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.setting-control label {
+    color: var(--golden);
+    flex: 0 0 150px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    width: 200px;
+    height: 4px;
+    background: var(--golden);
+    outline: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: var(--soviet-red);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid var(--golden);
+}
+
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: transparent;
+    border: 2px solid var(--golden);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--golden);
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    border-color: var(--soviet-red);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+    background-color: var(--soviet-red);
+}
+
+.camera-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.action-button {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: 2px solid var(--golden);
+    color: var(--golden);
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.action-button:hover {
+    background: var(--golden);
+    color: var(--dark-metal);
+    box-shadow: 0 0 15px var(--screen-glow);
+}
+
+.action-button.stop-record {
+    border-color: var(--soviet-red);
+    color: var(--soviet-red);
+}
+
+.action-button.stop-record:hover {
+    background: var(--soviet-red);
+    color: var(--dark-metal);
+    box-shadow: 0 0 15px rgba(204,0,0,0.5);
+}
+
+select {
+    background: transparent;
+    border: 2px solid var(--golden);
+    color: var(--golden);
+    padding: 5px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    box-shadow: 0 0 10px var(--screen-glow);
+}
+
+.value {
+    color: var(--golden);
+    min-width: 50px;
+    text-align: right;
+}
+
+.recordings-list {
+    margin-top: 20px;
+}
+
+.recording-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid var(--golden);
+    margin-bottom: 10px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.recording-name {
+    color: var(--golden);
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.recording-date {
+    color: var(--soviet-red);
+    font-size: 0.9em;
+}
+
+.download-button {
+    background: transparent;
+    border: 1px solid var(--golden);
+    color: var(--golden);
+    padding: 5px 10px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+}
+
+.download-button:hover {
+    background: var(--golden);
+    color: var(--dark-metal);
+    box-shadow: 0 0 10px var(--screen-glow);
+}
+
+.camera-controls {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--golden);
+    border-radius: 4px;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.record-button {
+    background: transparent;
+    border: 1px solid var(--soviet-red);
+    color: var(--soviet-red);
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+.record-button:hover {
+    background: rgba(204, 0, 0, 0.2);
+    box-shadow: 0 0 10px rgba(204, 0, 0, 0.5);
+}
+
+.record-icon {
+    width: 10px;
+    height: 10px;
+    background: var(--soviet-red);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.record-status {
+    color: var(--golden);
+    font-size: 0.8em;
+    min-width: 70px;
+}
+
+.quality-select {
+    background: transparent;
+    border: 1px solid var(--golden);
+    color: var(--golden);
+    padding: 2px 5px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8em;
+    cursor: pointer;
+}
+
+.quality-select:focus {
+    outline: none;
+    box-shadow: 0 0 5px var(--golden);
+}
+
+.duration {
+    color: var(--golden);
+    font-size: 0.8em;
+    font-family: 'Share Tech Mono', monospace;
+    min-width: 50px;
+    text-align: right;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* Recording active states */
+.recording .record-button {
+    background: rgba(204, 0, 0, 0.2);
+    animation: glow 2s infinite;
+}
+
+.recording .record-status {
+    color: var(--soviet-red);
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 5px var(--soviet-red); }
+    50% { box-shadow: 0 0 15px var(--soviet-red); }
+    100% { box-shadow: 0 0 5px var(--soviet-red); }
 }

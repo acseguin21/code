@@ -1,6 +1,7 @@
 import cv2
 import yaml
-from flask import Flask, render_template, Response, jsonify, request, url_for, send_from_directory
+from flask import Flask, render_template, Response, jsonify, request, url_for, send_from_directory, redirect, flash
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import logging
 from ptz_controller import PTZController
 import os
@@ -9,6 +10,9 @@ from werkzeug.utils import secure_filename
 from threading import Thread
 import time
 import sys
+from auth import Auth
+import secrets
+from flask_talisman import Talisman
 
 app = Flask(__name__)
 
@@ -24,6 +28,26 @@ logger = logging.getLogger(__name__)
 RECORDINGS_DIR = os.path.join(os.path.dirname(__file__), 'static', 'recordings')
 if not os.path.exists(RECORDINGS_DIR):
     os.makedirs(RECORDINGS_DIR)
+
+# Add these after app initialization
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+auth = Auth(app)
+
+# Initialize Talisman for security headers but disable HTTPS for development
+talisman = Talisman(
+    app,
+    force_https=True,
+    strict_transport_security=True,
+    session_cookie_secure=True,
+    content_security_policy={
+        'default-src': "'self'",
+        'img-src': "'self' data: blob:",
+        'script-src': "'self' 'unsafe-inline'",
+        'style-src': "'self' 'unsafe-inline' https://fonts.googleapis.com",
+        'font-src': "'self' https://fonts.gstatic.com",
+        'connect-src': "'self' wss: https:",
+    }
+)
 
 class CameraStream:
     def __init__(self, camera_settings):
@@ -81,13 +105,37 @@ def load_camera_settings():
         logger.error(f"Error loading camera config: {str(e)}")
         return []
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = auth.authenticate(username, password)
+        if user:
+            login_user(user)
+            next_page = request.args.get('next')
+            return redirect(next_page if next_page else url_for('index'))
+        return render_template('login.html', error="Invalid credentials")
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     """Home page."""
     camera_settings = load_camera_settings()
     return render_template('index.html', cameras=camera_settings)
 
 @app.route('/video_feed/<int:camera_id>')
+@login_required
 def video_feed(camera_id):
     """Video streaming route. Put this in the src attribute of an img tag."""
     camera_settings = load_camera_settings()
@@ -191,6 +239,7 @@ def get_current_settings():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/settings/update', methods=['POST'])
+@login_required
 def update_settings():
     try:
         settings = request.get_json()
@@ -332,10 +381,40 @@ def handle_error(error):
     logger.error(f"Unhandled error: {str(error)}", exc_info=True)
     return jsonify({'error': str(error)}), 500
 
+@app.route('/settings')
+@login_required
+def settings():
+    """Settings and documentation page."""
+    return render_template('settings.html')
+
+@app.route('/api/recordings/download/<path:filename>')
+@login_required
+def download_recording(filename):
+    """Download a specific recording."""
+    try:
+        return send_from_directory(
+            RECORDINGS_DIR, 
+            filename,
+            as_attachment=True,
+            attachment_filename=filename
+        )
+    except Exception as e:
+        logger.error(f"Error downloading recording {filename}: {str(e)}")
+        return jsonify({'error': str(e)}), 404
+
 if __name__ == "__main__":
     try:
         logger.info("Starting web camera stream server...")
-        app.run(host='0.0.0.0', port=5000, threaded=True)
+        ssl_context = (
+            os.environ.get('SSL_CERT_PATH', 'certs/cert.pem'),
+            os.environ.get('SSL_KEY_PATH', 'certs/key.pem')
+        )
+        app.run(
+            host='0.0.0.0',
+            port=443,
+            ssl_context=ssl_context,
+            threaded=True
+        )
     except Exception as e:
         logger.error(f"Failed to start server: {str(e)}", exc_info=True)
         sys.exit(1)

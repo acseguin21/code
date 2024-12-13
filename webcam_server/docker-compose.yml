@@ -10,19 +10,24 @@ services:
     platform: linux/arm64
     container_name: web_camera_stream
     ports:
-      - "5000:5000"
+      - "443:443"
     volumes:
       - ./static:/app/static
       - ./camera_config.yml:/app/camera_config.yml
       - ./static/recordings:/app/static/recordings
+      - ./certs:/app/certs:ro
     environment:
       FLASK_ENV: development
       LOG_LEVEL: DEBUG
       CAMERA_USERNAME: ${CAMERA_USERNAME}
       CAMERA_PASSWORD: ${CAMERA_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SSL_CERT_PATH: /app/certs/cert.pem
+      SSL_KEY_PATH: /app/certs/key.pem
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      test: ["CMD", "curl", "-k", "https://localhost:443/"]
       interval: 30s
       timeout: 10s
       retries: 3

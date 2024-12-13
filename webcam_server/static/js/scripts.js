@@ -190,28 +190,73 @@ document.addEventListener('DOMContentLoaded', function() {
     window.toggleRecordingsMenu = toggleRecordingsMenu;
 
     async function toggleRecording(cameraId) {
-        const recordButton = document.querySelector(`#recordButton_${cameraId}`);
-        const isRecording = recordButton.classList.contains('recording');
+        const statusElement = document.getElementById(`recordStatus${cameraId}`);
+        const durationElement = document.getElementById(`recordDuration${cameraId}`);
+        const container = statusElement.closest('.camera-container');
         
+        if (container.classList.contains('recording')) {
+            // Stop recording
+            stopRecording(cameraId);
+            container.classList.remove('recording');
+            statusElement.textContent = 'STANDBY';
+            durationElement.textContent = '00:00';
+        } else {
+            // Start recording
+            startRecording(cameraId);
+            container.classList.add('recording');
+            statusElement.textContent = 'RECORDING';
+            startTimer(cameraId);
+        }
+    }
+
+    function startTimer(cameraId) {
+        const durationElement = document.getElementById(`recordDuration${cameraId}`);
+        let seconds = 0;
+        
+        const timer = setInterval(() => {
+            seconds++;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            durationElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                
+            if (!durationElement.closest('.camera-container').classList.contains('recording')) {
+                clearInterval(timer);
+            }
+        }, 1000);
+    }
+
+    function setQuality(cameraId, quality) {
+        fetch(`/camera/${cameraId}/quality`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ quality })
+        });
+    }
+
+    async function startRecording(cameraId) {
         try {
-            const response = await fetch(`/camera/${cameraId}/record/${isRecording ? 'stop' : 'start'}`, {
+            const response = await fetch(`/camera/${cameraId}/record/start`, {
                 method: 'POST'
             });
-            
-            if (!response.ok) throw new Error('Failed to toggle recording');
-            
-            const result = await response.json();
-            
-            if (isRecording) {
-                recordButton.classList.remove('recording');
-                showNotification(`Recording stopped: ${result.filename}`);
-            } else {
-                recordButton.classList.add('recording');
-                showNotification(`Recording started: ${result.filename}`);
-            }
+            const data = await response.json();
+            console.log('Recording started:', data);
         } catch (error) {
-            console.error('Recording error:', error);
-            showNotification('Failed to toggle recording', 'error');
+            console.error('Failed to start recording:', error);
+        }
+    }
+
+    async function stopRecording(cameraId) {
+        try {
+            const response = await fetch(`/camera/${cameraId}/record/stop`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            console.log('Recording stopped:', data);
+        } catch (error) {
+            console.error('Failed to stop recording:', error);
         }
     }
 

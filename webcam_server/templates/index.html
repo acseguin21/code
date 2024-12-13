@@ -13,19 +13,42 @@
 <body>
     <div class="container">
         <header>
-            <h1>Surveillance System</h1>
-            <div class="status-bar">
-                <div class="status-item">
-                    <span class="status-label">STATUS</span>
-                    <span class="status-value active">ACTIVE</span>
+            <div class="header-content">
+                <div class="system-title">
+                    <h1>GoldenEye Surveillance</h1>
+                    <span class="classification">LEVEL: TOP SECRET</span>
                 </div>
-                <div class="status-item">
-                    <span class="status-label">FEEDS</span>
-                    <span class="status-value">{{ cameras|length }}</span>
+                <div class="header-controls">
+                    <a href="{{ url_for('settings') }}" class="control-button settings">System Control</a>
+                    <a href="{{ url_for('logout') }}" class="control-button logout">Terminate</a>
                 </div>
             </div>
-            <button class="settings-button" onclick="toggleSettingsMenu()">Settings</button>
-            <button class="recordings-button" onclick="toggleRecordingsMenu()">Recordings</button>
+            <div class="status-ribbon">
+                <div class="status-item">
+                    <span class="status-label">Container Status:</span>
+                    <span class="status-indicator" id="containerStatus">🍏</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Camera Connections:</span>
+                    <span class="status-indicator" id="cameraStatus">🍏</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Threat Level:</span>
+                    <span class="status-indicator" id="threatLevel">🍏</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Frame Rate:</span>
+                    <span class="status-indicator" id="frameRate">📊</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Stream Rate:</span>
+                    <span class="status-indicator" id="streamRate">📈</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Signal Strength:</span>
+                    <span class="status-indicator" id="signalStrength">📶</span>
+                </div>
+            </div>
         </header>
 
         <main>
@@ -39,7 +62,33 @@
                                 <span class="timestamp">LIVE</span>
                                 <span class="camera-id">{{ camera.name }}</span>
                             </div>
-                            <div class="crosshair"></div>
+                            <div class="crosshair">
+                                <div class="corner corner-tl"></div>
+                                <div class="corner corner-tr"></div>
+                                <div class="corner corner-bl"></div>
+                                <div class="corner corner-br"></div>
+                                <div class="range-indicator range-top">50m</div>
+                                <div class="range-indicator range-bottom">100m</div>
+                                <div class="range-indicator range-left">75m</div>
+                                <div class="range-indicator range-right">125m</div>
+                            </div>
+                            <div class="camera-controls">
+                                <div class="control-group">
+                                    <button class="record-button" onclick="event.stopPropagation(); toggleRecording({{ loop.index0 }})">
+                                        <span class="record-icon"></span>
+                                        REC
+                                    </button>
+                                    <span class="record-status" id="recordStatus{{ loop.index0 }}">STANDBY</span>
+                                </div>
+                                <div class="control-group">
+                                    <select class="quality-select" onchange="event.stopPropagation(); setQuality({{ loop.index0 }}, this.value)">
+                                        <option value="high">HIGH</option>
+                                        <option value="medium">MED</option>
+                                        <option value="low">LOW</option>
+                                    </select>
+                                    <span class="duration" id="recordDuration{{ loop.index0 }}">00:00</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

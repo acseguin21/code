@@ -9,3 +9,9 @@ gunicorn==20.1.0
 numpy==1.21.0
 werkzeug==2.0.3
 onvif-zeep==0.2.12
+flask-login==0.6.2
+flask-talisman==1.0.0
+pyjwt==2.6.0
+marshmallow==3.19.0
+cryptography==39.0.1
+redis==4.5.4

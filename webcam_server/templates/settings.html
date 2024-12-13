@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Control - GoldenEye Surveillance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body class="settings-body">
+    <div class="settings-container">
+        <nav class="settings-nav">
+            <a href="{{ url_for('index') }}" class="nav-button">◀ Return to Command Center</a>
+            <h1>System Control Center</h1>
+            <a href="{{ url_for('logout') }}" class="nav-button danger">⚠ Terminate Session</a>
+        </nav>
+
+        <div class="settings-grid">
+            <section class="settings-panel">
+                <h2>Camera Configuration</h2>
+                {% for camera in cameras %}
+                <div class="camera-settings-group">
+                    <h3>{{ camera.name }}</h3>
+                    <div class="setting-control">
+                        <label>Recording Loop (minutes)</label>
+                        <input type="range" min="1" max="60" value="10" class="slider" 
+                               data-camera="{{ loop.index0 }}" data-setting="recordLength">
+                        <span class="value">10</span>
+                    </div>
+                    <div class="setting-control">
+                        <label>File Size Limit (MB)</label>
+                        <input type="range" min="10" max="1000" value="100" class="slider" 
+                               data-camera="{{ loop.index0 }}" data-setting="fileSize">
+                        <span class="value">100</span>
+                    </div>
+                    <div class="setting-control">
+                        <label>Auto-Record</label>
+                        <label class="toggle">
+                            <input type="checkbox" data-camera="{{ loop.index0 }}" data-setting="autoRecord">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-control">
+                        <label>Quality</label>
+                        <select data-camera="{{ loop.index0 }}" data-setting="quality">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="setting-control">
+                        <label>Frame Rate</label>
+                        <select data-camera="{{ loop.index0 }}" data-setting="fps">
+                            <option value="30">30 FPS</option>
+                            <option value="24">24 FPS</option>
+                            <option value="15">15 FPS</option>
+                        </select>
+                    </div>
+                    <div class="camera-actions">
+                        <button class="action-button start-record" data-camera="{{ loop.index0 }}">
+                            Start Recording
+                        </button>
+                        <button class="action-button stop-record" data-camera="{{ loop.index0 }}">
+                            Stop Recording
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="settings-panel">
+                <h2>Recordings Archive</h2>
+                <div class="recordings-list" id="recordingsList">
+                    <!-- Populated by JavaScript -->
+                </div>
+                <div class="documentation">
+                    <h3>Recording Instructions</h3>
+                    <ol>
+                        <li>Set recording length for continuous loop recording</li>
+                        <li>Configure file size limit to manage storage</li>
+                        <li>Enable auto-record for motion detection</li>
+                        <li>Adjust quality and FPS based on network bandwidth</li>
+                    </ol>
+
+                    <h3>File Management</h3>
+                    <ol>
+                        <li>Files are stored in: <code>/static/recordings/</code></li>
+                        <li>Format: <code>camera_ID_TIMESTAMP.mp4</code></li>
+                        <li>Access via SFTP or download below</li>
+                        <li>Auto-cleanup when storage exceeds limit</li>
+                    </ol>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+</body>
+</html> 
